@@ -218,9 +218,9 @@ Using a SLURM script (instead of running a command directly from the terminal) a
    
 10. You can see how long your script has been running with:
    
-   ```
-   squeue -u yournetid
-   ```
+      ```
+      squeue -u yournetid
+      ```
    
 11. When your run completes (or if it fails), an email notification will be sent to the address you provided. 
 
