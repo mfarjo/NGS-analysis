@@ -35,14 +35,20 @@ params.NAIndexH3N2 = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences
 params.MIndexH3N2 = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/H3N2/H3N2_Mas18_7_M"
 params.NSIndexH3N2 = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/H3N2/H3N2_Mas18_8_NS"
 
+params.PB2IndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_PB2"
+params.PB1IndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_PB1"
+params.PAIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_PA"
+params.HAIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_HA"
+params.NPIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_NP"
+params.NAIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_NA"
+params.MIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_M"
+params.NSIndexIBV = "/home/groups/hpcbio_shared/cbrooke_lab/reference_sequences/IBV/IBV_Tex20_1_NS"
+
 // Minimum read quality for variant calling
 params.minQual = '20'
 
 // Minimum iSNV frequency for variant calling
 params.minFreq = '0.03'
-
-// Minimum read depth for variant calling
-params.minDepth = '1000'
 
 // Biocluster options (memory in gigabytes)
 params.queue = 'normal'
@@ -278,6 +284,17 @@ process ALIGN_VIRUS {
         bowtie2 -x $params.NAIndexH3N2 -1 $r1 -2 $r2 -S ${sample}_NA.sam
         bowtie2 -x $params.MIndexH3N2 -1 $r1 -2 $r2 -S ${sample}_M.sam
         bowtie2 -x $params.NSIndexH3N2 -1 $r1 -2 $r2 -S ${sample}_NS.sam 
+    fi
+    
+    if [ "$subtype" == "IBV" ]; then 
+        bowtie2 -x $params.PB2IndexIBV -1 $r1 -2 $r2 -S ${sample}_PB2.sam
+        bowtie2 -x $params.PB1IndexIBV -1 $r1 -2 $r2 -S ${sample}_PB1.sam
+        bowtie2 -x $params.PAIndexIBV -1 $r1 -2 $r2 -S ${sample}_PA.sam
+        bowtie2 -x $params.HAIndexIBV -1 $r1 -2 $r2 -S ${sample}_HA.sam
+        bowtie2 -x $params.NPIndexIBV -1 $r1 -2 $r2 -S ${sample}_NP.sam
+        bowtie2 -x $params.NAIndexIBV -1 $r1 -2 $r2 -S ${sample}_NA.sam
+        bowtie2 -x $params.MIndexIBV -1 $r1 -2 $r2 -S ${sample}_M.sam
+        bowtie2 -x $params.NSIndexIBV -1 $r1 -2 $r2 -S ${sample}_NS.sam 
     fi
 
     """
@@ -522,12 +539,11 @@ process DEPTH_STATS {
     samtools depth -a $NS -o ${sample}_NS_depth.tsv
    
     """
-    
 }
 
 /*
-* Step 15. Perform variant-calling relative to the reference sequence
-*
+* Step 15. Perform variant-calling relative to the reference sequence and annotate effects
+*/
 
 process CALL_VARIANTS {
     fair true
@@ -537,6 +553,7 @@ process CALL_VARIANTS {
     cpus params.CPU
     module "${params.samtoolsMod}"
     module "${params.ivarMod}"
+    publishDir "${params.projectPath}/variants", mode: 'copy'
     
     input:
     tuple path(PB2), path(PB1), path(PA), path(HA), path(NP), path(NA), path(M), path(NS)
@@ -549,46 +566,62 @@ process CALL_VARIANTS {
     script:
     """
     if [ "$subtype" == "H1N1" ]; then 
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB2IndexH1N1}.fasta" $PB2 | ivar variants -p ${sample}_PB2_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PB2IndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB2IndexH1N1}.fasta" $PB2 | ivar variants -p ${sample}_PB2_variants -q $params.minQual -t $params.minFreq -r "${params.PB2IndexH1N1}.fasta" -g "${params.PB2IndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB1IndexH1N1}.fasta" $PB1 | ivar variants -p ${sample}_PB1_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PB1IndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB1IndexH1N1}.fasta" $PB1 | ivar variants -p ${sample}_PB1_variants -q $params.minQual -t $params.minFreq -r "${params.PB1IndexH1N1}.fasta" -g "${params.PB1IndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PAIndexH1N1}.fasta" $PA | ivar variants -p ${sample}_PA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PAIndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PAIndexH1N1}.fasta" $PA | ivar variants -p ${sample}_PA_variants -q $params.minQual -t $params.minFreq -r "${params.PAIndexH1N1}.fasta" -g "${params.PAIndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.HAIndexH1N1}.fasta" $HA | ivar variants -p ${sample}_HA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.HAIndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.HAIndexH1N1}.fasta" $HA | ivar variants -p ${sample}_HA_variants -q $params.minQual -t $params.minFreq -r "${params.HAIndexH1N1}.fasta" -g "${params.HAIndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NPIndexH1N1}.fasta" $NP | ivar variants -p ${sample}_NP_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NPIndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NPIndexH1N1}.fasta" $NP | ivar variants -p ${sample}_NP_variants -q $params.minQual -t $params.minFreq -r "${params.NPIndexH1N1}.fasta" -g "${params.NPIndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NAIndexH1N1}.fasta" $NA | ivar variants -p ${sample}_NA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NAIndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NAIndexH1N1}.fasta" $NA | ivar variants -p ${sample}_NA_variants -q $params.minQual -t $params.minFreq -r "${params.NAIndexH1N1}.fasta" -g "${params.NAIndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.MIndexH1N1}.fasta" $M | ivar variants -p ${sample}_M_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.MIndexH1N1}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.MIndexH1N1}.fasta" $M | ivar variants -p ${sample}_M_variants -q $params.minQual -t $params.minFreq -r "${params.MIndexH1N1}.fasta" -g "${params.MIndexH1N1}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NSIndexH1N1}.fasta" $NS | ivar variants -p ${sample}_NS_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NSIndexH1N1}.fasta" 
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NSIndexH1N1}.fasta" $NS | ivar variants -p ${sample}_NS_variants -q $params.minQual -t $params.minFreq -r "${params.NSIndexH1N1}.fasta" -g "${params.NSIndexH1N1}.gff3" 
     fi
     
     if [ "$subtype" == "H3N2" ]; then 
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB2IndexH3N2}.fasta" $PB2 | ivar variants -p ${sample}_PB2_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PB2IndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB2IndexH3N2}.fasta" $PB2 | ivar variants -p ${sample}_PB2_variants -q $params.minQual -t $params.minFreq -r "${params.PB2IndexH3N2}.fasta" -g "${params.PB2IndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB1IndexH3N2}.fasta" $PB1 | ivar variants -p ${sample}_PB1_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PB1IndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB1IndexH3N2}.fasta" $PB1 | ivar variants -p ${sample}_PB1_variants -q $params.minQual -t $params.minFreq -r "${params.PB1IndexH3N2}.fasta" -g "${params.PB1IndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PAIndexH3N2}.fasta" $PA | ivar variants -p ${sample}_PA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.PAIndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PAIndexH3N2}.fasta" $PA | ivar variants -p ${sample}_PA_variants -q $params.minQual -t $params.minFreq -r "${params.PAIndexH3N2}.fasta" -g "${params.PAIndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.HAIndexH3N2}.fasta" $HA | ivar variants -p ${sample}_HA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.HAIndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.HAIndexH3N2}.fasta" $HA | ivar variants -p ${sample}_HA_variants -q $params.minQual -t $params.minFreq -r "${params.HAIndexH3N2}.fasta" -g "${params.HAIndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NPIndexH3N2}.fasta" $NP | ivar variants -p ${sample}_NP_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NPIndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NPIndexH3N2}.fasta" $NP | ivar variants -p ${sample}_NP_variants -q $params.minQual -t $params.minFreq -r "${params.NPIndexH3N2}.fasta" -g "${params.NPIndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NAIndexH3N2}.fasta" $NA | ivar variants -p ${sample}_NA_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NAIndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NAIndexH3N2}.fasta" $NA | ivar variants -p ${sample}_NA_variants -q $params.minQual -t $params.minFreq -r "${params.NAIndexH3N2}.fasta" -g "${params.NAIndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.MIndexH3N2}.fasta" $M | ivar variants -p ${sample}_M_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.MIndexH3N2}.fasta"
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.MIndexH3N2}.fasta" $M | ivar variants -p ${sample}_M_variants -q $params.minQual -t $params.minFreq -r "${params.MIndexH3N2}.fasta" -g "${params.MIndexH3N2}.gff3"
         
-        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NSIndexH3N2}.fasta" $NS | ivar variants -p ${sample}_NS_variants -q $params.minQual -t $params.minFreq -m $params.minDepth -r "${params.NSIndexH3N2}.fasta" 
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NSIndexH3N2}.fasta" $NS | ivar variants -p ${sample}_NS_variants -q $params.minQual -t $params.minFreq -r "${params.NSIndexH3N2}.fasta" -g "${params.NSIndexH3N2}.gff3" 
     fi
-
+    
+    if [ "$subtype" == "IBV" ]; then 
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB2IndexIBV}.fasta" $PB2 | ivar variants -p ${sample}_PB2_variants -q $params.minQual -t $params.minFreq -r "${params.PB2IndexIBV}.fasta" -g "${params.PB2IndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PB1IndexIBV}.fasta" $PB1 | ivar variants -p ${sample}_PB1_variants -q $params.minQual -t $params.minFreq -r "${params.PB1IndexIBV}.fasta" -g "${params.PB1IndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.PAIndexIBV}.fasta" $PA | ivar variants -p ${sample}_PA_variants -q $params.minQual -t $params.minFreq -r "${params.PAIndexIBV}.fasta" -g "${params.PAIndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.HAIndexIBV}.fasta" $HA | ivar variants -p ${sample}_HA_variants -q $params.minQual -t $params.minFreq -r "${params.HAIndexIBV}.fasta" -g "${params.HAIndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NPIndexIBV}.fasta" $NP | ivar variants -p ${sample}_NP_variants -q $params.minQual -t $params.minFreq -r "${params.NPIndexIBV}.fasta" -g "${params.NPIndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NAIndexIBV}.fasta" $NA | ivar variants -p ${sample}_NA_variants -q $params.minQual -t $params.minFreq -r "${params.NAIndexIBV}.fasta" -g "${params.NAIndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.MIndexIBV}.fasta" $M | ivar variants -p ${sample}_M_variants -q $params.minQual -t $params.minFreq -r "${params.MIndexIBV}.fasta" -g "${params.MIndexIBV}.gff3"
+        
+        samtools mpileup -aa -A -d 0 -B -Q 0 --reference "${params.NSIndexIBV}.fasta" $NS | ivar variants -p ${sample}_NS_variants -q $params.minQual -t $params.minFreq -r "${params.NSIndexIBV}.fasta" -g "${params.NSIndexIBV}.gff3" 
+    fi
     
     """
     
 }
-
 
 /*
 * Workflow
