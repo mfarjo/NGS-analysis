@@ -139,7 +139,8 @@ If you don't have a biocluster account, you can request one here: https://www.ig
    
     The commands above run the pipeline directly from your terminal window, which will give you progress updates as each step is completed:
 
-     <img width="583" alt="Screenshot 2025-06-24 at 12 14 00 PM" src="https://github.com/user-attachments/assets/6d55f390-eec8-452c-84d3-f30367293b08" />
+     <img width="489" alt="Screenshot 2025-06-27 at 1 01 03 PM" src="https://github.com/user-attachments/assets/66cbb18b-f3d2-4cf3-b137-6e15ad39ebbf" />
+
 
     Running the pipeline this way means that the run will terminate when you exit the terminal window or shut off your computer. If you have a lot of samples, it may be easier to run the pipeline using a SLURM script instead (see: **Running nextflow with SLURM**).
 
