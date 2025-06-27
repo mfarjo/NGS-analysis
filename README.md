@@ -67,7 +67,7 @@ If you don't have a biocluster account, you can request one here: https://www.ig
   
    <img width="134" alt="Screenshot 2025-06-24 at 10 51 25 AM" src="https://github.com/user-attachments/assets/45169d90-e621-4c92-829a-e4baeb93ca8f" />
 
-   It's important that this file is in .csv format (not .tsv or .xls). The subtype values can be "H1N1" or "H3N2".
+   It's important that this file is in .csv format (not .tsv or .xls). The subtype values can be "H1N1", "H3N2", or "IBV".
 
 2. Download and open the nextflow template file ("flu_ngs.nf") to change any parameters that you want to alter before you run the pipeline:
    
