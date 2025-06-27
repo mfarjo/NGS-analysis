@@ -1,5 +1,6 @@
 # flu-NGS-analysis
 *Nextflow pipeline to generate consensus sequences and perform variant calling on influenza next-gen sequencing data.* 
+*This pipeline runs on nextflow version 24.10.4.*
 
 The pipeline performs the following processes:
 1. Adapter trimming (*fastp*)
@@ -9,10 +10,9 @@ The pipeline performs the following processes:
 5. Removing optical duplicates (*Picard*)
 6. Collecting per-nucleotide read depth data (*SAMtools*)
 7. Generating consensus sequences (*iVar*)
-8. Calling sub-consensus variants (*iVar*)
-9. Annotating protein-level variant effects (*SnpEff*)
+8. Calling sub-consensus variants and annotating protein-level effects (*iVar*)
 
-This pipeline runs on nextflow version 24.10.4
+This version of the pipeline uses the 2024-2025 IAV vaccine strains (*A/Wisconsin/67/2022(H1N1)* and *A/Massachusetts/18/2022(H3N2)*) and a recent Victoria-lineage IBV strain (*B/Texas/20/2024*) for genome alignment and variant calling. 
 
 # Logging on to the biocluster
 
